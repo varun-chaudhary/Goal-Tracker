@@ -22,4 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('get-csrf-token/', views.get_csrf_token, name='get_csrf_token'),
     path("user/", include('User.urls')),
+    path("goal/", include('Goal.urls')),
 ]
