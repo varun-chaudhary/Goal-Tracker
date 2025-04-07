@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
 from .models import User
 from django.http import JsonResponse
+from django.core.signing import Signer
 import json
 from django.views.decorators.csrf import csrf_exempt
 
@@ -48,6 +49,9 @@ def createuser(request):
     else:
         return JsonResponse({"error": "Invalid request method!"}, status=405)
 
+
+signer = Signer()
+
 @csrf_exempt
 def login(request):
     if request.method == "POST":
@@ -74,13 +78,20 @@ def login(request):
             if not check_password(password, user.password):
                 return JsonResponse({"error": "Invalid password!"}, status=401)
             # Return success response
-            response = JsonResponse({"message": "Login successful!", "user" : {"name" : user.name, email : user.email}}, status=200)
+            
+            response = JsonResponse({"message": "Login successful!", "user" : {"id" : user.id, "name" : user.name, "email" : user.email}}, status=200)
+            signed_email = signer.sign(user.email)
             # Set a secure cookie with the user ID
-            response.set_cookie("user_id", user.id, httponly=True, secure=True, samesite='Lax')
+            # Use this in development
+            response.set_cookie("user_auth", signed_email, httponly=True, samesite='Lax')
+            response.set_cookie("user_id", user.id, httponly=True, samesite='Lax')
+
             return response
 
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON data!"}, status=400)
     else:
         return JsonResponse({"error": "Invalid request method!"}, status=405)
+
+
 
