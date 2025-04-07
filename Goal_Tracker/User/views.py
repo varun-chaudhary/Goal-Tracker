@@ -74,7 +74,11 @@ def login(request):
             if not check_password(password, user.password):
                 return JsonResponse({"error": "Invalid password!"}, status=401)
             # Return success response
-            return JsonResponse({"message": "Login successful!", "user" : {"name" : user.name, email : user.email}}, status=200)
+            response = JsonResponse({"message": "Login successful!", "user" : {"name" : user.name, email : user.email}}, status=200)
+            # Set a secure cookie with the user ID
+            response.set_cookie("user_id", user.id, httponly=True, secure=True, samesite='Lax')
+            return response
+
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON data!"}, status=400)
     else:
